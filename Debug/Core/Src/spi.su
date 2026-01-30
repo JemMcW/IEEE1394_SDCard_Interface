@@ -1,8 +1,8 @@
-../Core/Src/spi.c:26:6:WriteBitStream	16	static
-../Core/Src/spi.c:64:6:MX_SPI3_Init	8	static
-../Core/Src/spi.c:98:6:HAL_SPI_MspInit	48	static
-../Core/Src/spi.c:129:6:HAL_SPI_MspDeInit	16	static
-../Core/Src/spi.c:155:6:SSHigh	8	static
-../Core/Src/spi.c:160:6:SSLow	8	static
-../Core/Src/spi.c:165:6:FPGARstHigh	8	static
-../Core/Src/spi.c:170:6:FPGARstLow	8	static
+../Core/Src/spi.c:66:6:MX_SPI3_Init	8	static
+../Core/Src/spi.c:100:6:HAL_SPI_MspInit	40	static
+../Core/Src/spi.c:131:6:HAL_SPI_MspDeInit	8	static
+../Core/Src/spi.c:157:6:SSHigh	8	static
+../Core/Src/spi.c:162:6:SSLow	8	static
+../Core/Src/spi.c:167:6:FPGARstHigh	8	static
+../Core/Src/spi.c:172:6:FPGARstLow	8	static
+../Core/Src/spi.c:28:6:WriteBitStream	24	static

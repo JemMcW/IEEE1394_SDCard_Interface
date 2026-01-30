@@ -1,0 +1,39 @@
+
+# quad spi
+set_io quad_spi_clk 20
+set_io quad_spi_cs 13
+set_io quad_spi_data[0] 9
+set_io quad_spi_data[1] 10
+set_io quad_spi_data[2] 11
+set_io quad_spi_data[3] 12
+
+# ieee1394 interface
+set_io phy_clk 37
+set_frequency phy_clk 50
+
+set_io phy_rst 42
+set_io phy_lreq 38
+
+set_io phy_ctl[0] 36
+set_io phy_ctl[1] 35
+
+set_io phy_data[0] 34
+set_io phy_data[1] 32
+set_io phy_data[2] 31
+set_io phy_data[3] 28
+set_io phy_data[4] 27
+set_io phy_data[5] 26
+set_io phy_data[6] 25
+set_io phy_data[7] 23
+
+# fifo status
+set_io fifo_empty 46
+set_io fifo_half_full 47
+set_io fifo_full 44
+
+set_io -pullup yes error_status 45
+
+# status leds
+set_io led[0] 39
+set_io led[1] 40
+set_io led[2] 41

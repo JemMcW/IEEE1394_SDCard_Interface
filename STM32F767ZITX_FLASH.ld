@@ -44,13 +44,22 @@ _Min_Stack_Size = 0x800; /* required amount of stack */
 /* Memories definition */
 MEMORY
 {
-  RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 512K
-  FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 2048K
+  RAM    (xrw)    		: ORIGIN = 0x20000000,  LENGTH = 512K
+  FLASH    (rx)    		: ORIGIN = 0x8000000,   LENGTH = 1920K
+  BITSTREAM_FLASH (r) 	: ORIGIN = 0x81E0000, 	LENGTH = 128K     /* new region in flash for fpga bitstream*/ 
 }
 
 /* Sections */
 SECTIONS
 {
+	
+  .fpgabitstream : 
+  {
+  	. = ALIGN(4);
+  	KEEP(*(.fpgabitstream)) /* get .fpgabitstream section from all files (will only be in found in top.o)*/
+  	. = ALIGN(4);
+  } >BITSTREAM_FLASH /* direct to BITSTREAM_FLASH memory location*/ 
+	
 
   /* The startup code into "FLASH" Rom type memory */
   .isr_vector :

@@ -38,7 +38,7 @@ void MX_QUADSPI_Init(void)
 
   /* USER CODE END QUADSPI_Init 1 */
   hqspi.Instance = QUADSPI;
-  hqspi.Init.ClockPrescaler = 1;
+  hqspi.Init.ClockPrescaler = 3;
   hqspi.Init.FifoThreshold = 4;
   hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_HALFCYCLE;
   hqspi.Init.FlashSize = 31;
@@ -167,6 +167,7 @@ void QSPI_ConfigureMemoryMapped()
 
 
 	qspiMemMapped.TimeOutActivation = QSPI_TIMEOUT_COUNTER_DISABLE;
+//	qspiMemMapped.TimeOutPeriod = 32;
 
 	if (HAL_QSPI_MemoryMapped(&hqspi, &qspiCommand, &qspiMemMapped) != HAL_OK)
 	{

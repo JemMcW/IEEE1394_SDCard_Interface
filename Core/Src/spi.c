@@ -21,7 +21,9 @@
 #include "spi.h"
 
 /* USER CODE BEGIN 0 */
-#include "bitstream.h"
+
+#define BITSTREAM_LENGTH 71260
+#define BITSTREAM_START_ADDRESS 0x81E0000
 
 void WriteBitStream()
 {
@@ -43,14 +45,14 @@ void WriteBitStream()
 
 	SSLow();
 
-	// bitstream
-	HAL_SPI_Transmit(&hspi3, bitstream, 0xffff, 3000); // send 0x0 to 0xfffe
-	HAL_SPI_Transmit(&hspi3, &bitstream[0xffff], BITSTREAM_LENGTH - 0xffff, 3000); // send 0xffff ->
+	// Send Bitstream
+	HAL_SPI_Transmit(&hspi3, (uint8_t *)BITSTREAM_START_ADDRESS, 0xffff, 3000); // send 0x0 to 0xfffe
+	HAL_SPI_Transmit(&hspi3, (uint8_t *)(BITSTREAM_START_ADDRESS + 0xffff), BITSTREAM_LENGTH - 0xffff, 3000); // send 0xffff ->
 
 	SSHigh();
 
 	// ~150 dummy cycles
-	HAL_SPI_Transmit(&hspi3, bitstream, 19, 200);
+	HAL_SPI_Transmit(&hspi3, (uint8_t *)BITSTREAM_START_ADDRESS, 19, 200);
 
 	// TODO: Check CDONE
 	// TODO: float SS??

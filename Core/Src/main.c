@@ -52,7 +52,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+volatile uint8_t readFlag = 0;
 
+uint8_t frameBuffer[288000];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -73,112 +75,95 @@ void SystemClock_Config(void);
 int main(void)
 {
 
-  /* USER CODE BEGIN 1 */
+	/* USER CODE BEGIN 1 */
 //	  FRESULT res; /* FatFs function common result code */
 //	  uint32_t byteswritten, bytesread; /* File write/read counts */
 //	  uint8_t wtext[] = "STM32 FATFS works great!"; /* File write buffer */
 //	  uint8_t rtext[_MAX_SS];/* File read buffer */
 
-	  uint8_t readBuffer[64];
-	  memset(readBuffer, 0, 64);
+	/* USER CODE END 1 */
 
+	/* MCU Configuration--------------------------------------------------------*/
 
-  /* USER CODE END 1 */
+	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+	HAL_Init();
 
-  /* MCU Configuration--------------------------------------------------------*/
+	/* USER CODE BEGIN Init */
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+	/* USER CODE END Init */
 
-  /* USER CODE BEGIN Init */
+	/* Configure the system clock */
+	SystemClock_Config();
 
-  /* USER CODE END Init */
+	/* USER CODE BEGIN SysInit */
 
-  /* Configure the system clock */
-  SystemClock_Config();
+	/* USER CODE END SysInit */
 
-  /* USER CODE BEGIN SysInit */
+	/* Initialize all configured peripherals */
+	MX_GPIO_Init();
+	MX_DMA_Init();
 
-  /* USER CODE END SysInit */
+	MX_SPI3_Init();
+	WriteBitStream();
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_DMA_Init();
-  MX_SPI3_Init();
+	MX_ETH_Init();
+	MX_USART3_UART_Init();
+	MX_USB_OTG_FS_PCD_Init();
+	MX_QUADSPI_Init();
+	MX_SDMMC1_SD_Init();
+	MX_FATFS_Init();
 
-  WriteBitStream();
-
-  MX_ETH_Init();
-  MX_USART3_UART_Init();
-  MX_USB_OTG_FS_PCD_Init();
-  MX_QUADSPI_Init();
-  MX_SDMMC1_SD_Init();
-  MX_FATFS_Init();
-
-  /* USER CODE BEGIN 2 */
+	/* USER CODE BEGIN 2 */
 
     uint32_t bytesRead = 0;
 
-    // Quad SPI is memory mapped, can use memcpy or DMA directly from the FPGA memory
-    memcpy(readBuffer, (uint8_t *)QSPI_MEMORY_START_ADDRESS, 64);
-    bytesRead += 64;
-    HAL_UART_Transmit(&huart3, readBuffer, 64, 100);
+    // Enable fifo half full interrupts
+    HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(EXTI2_IRQn);
 
-    readBuffer[0] = '\n'; readBuffer[1] = '\r';
-    HAL_UART_Transmit(&huart3, readBuffer, 2, 100);
+	/* USER CODE END 2 */
 
-    // Reads must be made to sequential addresses due to pre-fetching, even though the FPGA doesn't care what the address is.
-    memcpy(readBuffer, (uint8_t *)QSPI_MEMORY_START_ADDRESS + bytesRead, 64);
-    bytesRead += 64;
-    HAL_UART_Transmit(&huart3, readBuffer, 64, 100);
+	/* Infinite loop */
+	/* USER CODE BEGIN WHILE */
 
-    readBuffer[0] = '\n'; readBuffer[1] = '\r';
-    HAL_UART_Transmit(&huart3, readBuffer, 2, 100);
-/*
- *
-  	if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != FR_OK)
-  	{
-  		Error_Handler();
-  	}
-  	else
-  	{
-		//Open file for writing (Create)
-		if(f_open(&SDFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
-		{
-			Error_Handler();
-		}
-		else
-		{
-			//Write to the text file
-			res = f_write(&SDFile, (uint8_t *)QSPI_MEMORY_START_ADDRESS, 1000, (void *)&byteswritten);
-			if((byteswritten == 0) || (res != FR_OK))
-			{
-				Error_Handler();
-			}
-			else
-			{
-				f_close(&SDFile);
-			}
-		}
-  	}
-  	f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
-  	*/
+	uint32_t readCounter = 0;
 
-  /* USER CODE END 2 */
+	while (1)
+	{
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+	  // Wait until fpga signals that data is ready
+	  if (readFlag == 1)
+	  {
+		  __disable_irq();
 
+		  // Quad SPI is memory mapped, can use memcpy or DMA directly from the FPGA memory
+		  // Number of bytes read must be equal to fpga fifo size (currently 512 bytes can be increased up to 4KB) (bigger better for SDCard writes?)
+		  memcpy(&frameBuffer[bytesRead], ((uint8_t *)QSPI_MEMORY_START_ADDRESS + bytesRead), 512);
 
-  while (1)
-  {
+		  // Reads must be made to sequential addresses due to stm pre-fetching, even though the FPGA doesn't care what the address is.
+		  // Maximum of 256MB can be memory mapped so wrap address
+		  // Not sure what happens with pre-fetch at end of memory
+		  bytesRead = (bytesRead + 512) & 0xfffffff;
 
+		  readFlag = 0;
+		  readCounter++;
+		  __enable_irq();
+	  }
 
-    /* USER CODE END WHILE */
+	  // After data is collected send over serial
+	  if (readCounter >= 562){
+		  for (int i = 0; i < 562; i++){
+			  HAL_UART_Transmit(&huart3, &frameBuffer[512*i], 512, 1000);
+			  HAL_Delay(100); // Delay so input buffer doesn't fill ??
+		  }
+		  while(1);
+	  }
 
-    /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
+	/* USER CODE END WHILE */
+
+	/* USER CODE BEGIN 3 */
+	}
+	/* USER CODE END 3 */
 }
 
 /**
@@ -239,6 +224,14 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    if(GPIO_Pin == GPIO_PIN_2)
+    {
+		readFlag = 1;
+    }
+}
 
 /* USER CODE END 4 */
 
