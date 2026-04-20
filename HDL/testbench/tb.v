@@ -19,31 +19,37 @@ module tb ();
     initial begin
 
         clk = 1'b0;
-        cs = 1'b1;
+        cs = 1'b0;
         first_read_t = 1'b1;
 
+        // forever begin
+        //
+        //     if (hf_t == 1'b1) begin
+        //
+        //         #10 cs = 1'b0;
+        //
+        //         if (first_read_t) begin
+        //             first_read_t = 1'b0;
+        //             #10 clk = ~clk;
+        //             #10 clk = ~clk;
+        //         end
+        //
+        //         for(i = 0; i < 1024; i = i + 1) begin
+        //             #10 clk = ~clk;
+        //         end
+        //
+        //         #100 cs = 1'b0;
+        //
+        //     end else begin
+        //         #20;
+        //     end
+        // end
+
         forever begin
-
-            if (hf_t == 1'b1) begin
-
-                #10 cs = 1'b0;
-
-                if (first_read_t) begin
-                    first_read_t = 1'b0;
-                    #10 clk = ~clk;
-                    #10 clk = ~clk;
-                end
-
-                for(i = 0; i < 1024; i = i + 1) begin
-                    #10 clk = ~clk;
-                end
-
-                #100 cs = 1'b0;
-
-            end else begin
-                #20;
-            end
+            #10 clk = ~clk;
         end
+
+
     end
 
 
@@ -90,7 +96,7 @@ module tb ();
             // don't care for data CRC
             #320 ctl_t = 2'b00;
 
-                        // iso packet
+            // iso packet
 
             #200 ctl_t = 2'b01; phy_data_t = 2'b11;
 

@@ -104,7 +104,9 @@ module top (
     (
         .write_clk_i(phy_clk),
         .write_en_i(dv_data_available),
+        // .write_en_i(phy_data_available),
         .data_in_i(dv_rx_data),
+        // .data_in_i(phy_rx_data),
 
         .read_clk_i(quad_spi_clk),
         .read_en_i(qspi_data_ready),

@@ -126,7 +126,39 @@ int main(void)
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 
+//    memcpy(&frameBuffer[bytesRead], ((uint8_t *)QSPI_MEMORY_START_ADDRESS + bytesRead), 512);
+//    bytesRead = (bytesRead + 512);
+//
+//    memcpy(&frameBuffer[bytesRead], ((uint8_t *)QSPI_MEMORY_START_ADDRESS + bytesRead), 512);
+//    bytesRead = (bytesRead + 512);
+//
+//    memcpy(&frameBuffer[bytesRead], ((uint8_t *)QSPI_MEMORY_START_ADDRESS + bytesRead), 512);
+//    bytesRead = (bytesRead + 512);
+//
+//    memcpy(&frameBuffer[bytesRead], ((uint8_t *)QSPI_MEMORY_START_ADDRESS + bytesRead), 512);
+//    bytesRead = (bytesRead + 512);
+//
+//    HAL_UART_Transmit(&huart3, &frameBuffer[0], 512, 1000);
+//    HAL_UART_Transmit(&huart3, &frameBuffer[512], 512, 1000);
+//    HAL_UART_Transmit(&huart3, &frameBuffer[1024], 512, 1000);
+//    HAL_UART_Transmit(&huart3, &frameBuffer[1024 + 512], 512, 1000);
+//
+//    while(1)
+//    {
+//
+//    }
+
 	uint32_t readCounter = 0;
+
+	while(readFlag == 0);
+
+	HAL_Delay(100);
+	readFlag = 0;
+
+	while(readFlag == 0);
+
+	HAL_Delay(5000);
+	readFlag = 0;
 
 	while (1)
 	{
@@ -135,6 +167,8 @@ int main(void)
 	  if (readFlag == 1)
 	  {
 		  __disable_irq();
+
+		  readFlag = 0;
 
 		  // Quad SPI is memory mapped, can use memcpy or DMA directly from the FPGA memory
 		  // Number of bytes read must be equal to fpga fifo size (currently 512 bytes can be increased up to 4KB) (bigger better for SDCard writes?)
@@ -145,14 +179,13 @@ int main(void)
 		  // Not sure what happens with pre-fetch at end of memory
 		  bytesRead = (bytesRead + 512) & 0xfffffff;
 
-		  readFlag = 0;
 		  readCounter++;
 		  __enable_irq();
 	  }
 
 	  // After data is collected send over serial
 	  if (readCounter >= 562){
-		  for (int i = 0; i < 562; i++){
+		  for (int i = 0; i < 100; i++){
 			  HAL_UART_Transmit(&huart3, &frameBuffer[512*i], 512, 1000);
 			  HAL_Delay(100); // Delay so input buffer doesn't fill ??
 		  }

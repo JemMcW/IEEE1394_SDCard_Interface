@@ -29,6 +29,7 @@ module ieee1394 (
 
     reg [3:0] data_shift;               // shift register for incoming data
     reg data_strobe_temp;               // temp signal to dellay strobe to align with data
+    // reg data_strobe_delay;
     reg receiving_data = 1'b0;
 
     always @(negedge phy_clk_i or posedge rst_i) begin
@@ -59,6 +60,20 @@ module ieee1394 (
 
         end
     end
+
+    // always @(negedge phy_clk_i) begin
+    //     data_strobe_delay <= data_strobe_temp;
+    // end
+    //
+    // always @(negedge phy_clk_i) begin
+    //     data_strobe_o <= data_strobe_delay;
+    //     receive_state_o <= receiving_data;
+    //     if (data_strobe_delay == 1'b1) begin
+    //         data_o <= data_shift;
+    //     end else begin
+    //         data_o <= 4'h0;
+    //     end
+    // end
 
     always @(negedge phy_clk_i) begin
         data_strobe_o <= data_strobe_temp;
