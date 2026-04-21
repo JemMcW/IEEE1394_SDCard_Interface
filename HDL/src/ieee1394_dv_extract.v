@@ -11,7 +11,7 @@ module ieee1394_dv_extract (
     input  wire [3:0] data_i,
     output reg  [3:0] data_o,
 
-    output wire       data_strobe_i,
+    input wire        data_strobe_i,
     output reg        data_strobe_o
 
 );
@@ -83,7 +83,8 @@ module ieee1394_dv_extract (
                 // skip rest of header
                 else if (headerNybbleCounter != 0) begin
                     headerNybbleCounter <= headerNybbleCounter - 1;
-                    ignore <= (dataNybbleCounter == 17'h1fffe);                  // Ignore non isochronous packets. Better way ?
+                    // ignore <= (dataNybbleCounter == 17'h1fffe);                  // Ignore non isochronous packets. Better way ?
+                    ignore <= (dataNybbleCounter != 17'h003d0);
                 end
 
                 // ignore first 8 bytes

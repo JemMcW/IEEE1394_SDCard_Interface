@@ -23,14 +23,12 @@ module fifo #(
     // Address width + 1 sized pointers allow index 2^N addresses
     reg [ADDRESS_WIDTH:0] write_addr = 0;
     reg [ADDRESS_WIDTH:0] read_addr = 0;
-    // wire [ADDRESS_WIDTH:0] read_addr_gc;
 
     reg write_addr_2nd_msb;
     wire fifo_half_full_edge;
+    reg fifo_half_full_edge_latch;
+    reg fifo_half_full_edge_delay;
     reg [3:0] pulseCounter;
-
-    // grey code read pointer to cross clock domains
-    // assign read_add_gc = read_addr ^ (read_addr >> 1)
 
     // Status flags
     assign fifo_empty_o = 1'b0;
@@ -45,9 +43,26 @@ module fifo #(
 
     assign fifo_half_full_edge = (write_addr[ADDRESS_WIDTH - 1] != write_addr_2nd_msb);
 
+    always @(negedge write_clk_i) begin
+        if (fifo_half_full_edge) begin
+            fifo_half_full_edge_latch <= 1;
+        end else if (fifo_half_full_edge_delay) begin
+            fifo_half_full_edge_latch <= 0;
+        end
+    end
+
+    always @(negedge write_clk_i) begin
+        if (fifo_half_full_edge_latch && (write_addr[4:0] == 5'h1f)) begin
+            fifo_half_full_edge_delay <= 1;
+        end else begin
+            fifo_half_full_edge_delay <= 0;
+        end
+    end
+
+
     // Fifo half full pulse
     always @(negedge write_clk_i) begin
-        if (pulseCounter != 0 || fifo_half_full_edge) begin
+        if (pulseCounter != 0 || fifo_half_full_edge_delay) begin
             pulseCounter <= pulseCounter + 1'b1;
             fifo_half_full_o <= 1'b1;
         end else begin
@@ -61,6 +76,7 @@ module fifo #(
         if (write_en_i) begin
             memory[write_addr[ADDRESS_WIDTH-1:0]] <= data_in_i;
             write_addr <= write_addr + 1'b1;
+
             write_addr_2nd_msb <= write_addr[ADDRESS_WIDTH - 1];
         end else begin
             write_addr <= write_addr;

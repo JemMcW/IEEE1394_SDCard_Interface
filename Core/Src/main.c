@@ -108,15 +108,15 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_QUADSPI_Init();
-
+  MX_SPI3_Init();
   WriteBitStream();
 
+  MX_QUADSPI_Init();
   MX_ETH_Init();
   MX_USART3_UART_Init();
   MX_SDMMC1_SD_Init();
   MX_FATFS_Init();
-  MX_SPI3_Init();
+
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
@@ -126,7 +126,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
+/*
     FATFS FatFs;
       FIL Fil;
       FRESULT FR_Status;
@@ -141,29 +141,36 @@ int main(void)
         while (FR_Status != FR_OK)
         {
           sprintf(TxBuffer, "Error! While Mounting SD Card, Error Code: (%i)\r\n", FR_Status);
+          HAL_UART_Transmit(&huart3, TxBuffer, strlen(TxBuffer), 1000);
+          while(1);
 //          USB_CDC_Print(TxBuffer);
 //          break;
         }
         sprintf(TxBuffer, "SD Card Mounted Successfully! \r\n\n");
-        USB_CDC_Print(TxBuffer);
+//        USB_CDC_Print(TxBuffer);
+        HAL_UART_Transmit(&huart3, TxBuffer, strlen(TxBuffer), 1000);
 
         //------------------[ Get & Print The SD Card Size & Free Space ]--------------------
         f_getfree("", &FreeClusters, &FS_Ptr);
         TotalSize = (uint32_t)((FS_Ptr->n_fatent - 2) * FS_Ptr->csize * 0.5);
         FreeSpace = (uint32_t)(FreeClusters * FS_Ptr->csize * 0.5);
         sprintf(TxBuffer, "Total SD Card Size: %lu Bytes\r\n", TotalSize);
-        USB_CDC_Print(TxBuffer);
+//        USB_CDC_Print(TxBuffer);
+        HAL_UART_Transmit(&huart3, TxBuffer, strlen(TxBuffer), 1000);
         sprintf(TxBuffer, "Free SD Card Space: %lu Bytes\r\n\n", FreeSpace);
-        USB_CDC_Print(TxBuffer);
+//        USB_CDC_Print(TxBuffer);
+        HAL_UART_Transmit(&huart3, TxBuffer, strlen(TxBuffer), 1000);
         //------------------[ Open A Text File For Write & Write Data ]--------------------
         //Open the file
         FR_Status = f_open(&Fil, "file.raw", FA_WRITE | FA_READ | FA_CREATE_ALWAYS);
         while(FR_Status != FR_OK)
         {
           sprintf(TxBuffer, "Error! While Creating/Opening A New Text File, Error Code: (%i)\r\n", FR_Status);
+          HAL_UART_Transmit(&huart3, TxBuffer, strlen(TxBuffer), 1000);
 //          USB_CDC_Print(TxBuffer);
+          while(1);
 
-        }
+        } */
 
         // Enable fifo half full interrupts
         HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
@@ -243,6 +250,16 @@ int main(void)
 
 	uint32_t readCounter = 0;
 
+
+	// wait a bit
+	while(readFlag == 0);
+	HAL_Delay(100);
+	readFlag = 0;
+
+	while(readFlag == 0);
+	HAL_Delay(5000);
+	readFlag = 0;
+
 	while (1)
 	{
 	  // Wait until fpga signals that data is ready
@@ -267,11 +284,16 @@ int main(void)
 	  // After data is collected send over serial
 	  if (readCounter >= 562)
 	  {
-//		  for (int i = 0; i < 562 / 2; i++){
-//			  HAL_UART_Transmit(&huart3, &frameBuffer[512*i], 512, 1000);
-		  f_write(&Fil, &frameBuffer[0], 562*512, &bytesWritten);
+		  for (int i = 0; i < 562; i++)
+		  {
+			  HAL_UART_Transmit(&huart3, &frameBuffer[512*i], 512, 1000);
+			  HAL_Delay(100);
+		  }
+//		  f_write(&Fil, &frameBuffer[0], 562*512, &bytesWritten);
+
+
 //
-		  f_close(&Fil);
+//		  f_close(&Fil);
 		  __BKPT(1);
 		  while(1)
 		  {

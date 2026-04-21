@@ -9,7 +9,7 @@ set_io quad_spi_data[3] 12
 
 # ieee1394 interface
 set_io phy_clk 37
-set_frequency phy_clk 50
+set_frequency phy_clk 45
 
 set_io phy_rst 42
 set_io phy_lreq 38
