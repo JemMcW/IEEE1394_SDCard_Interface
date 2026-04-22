@@ -52,7 +52,7 @@ module fifo #(
     end
 
     always @(negedge write_clk_i) begin
-        if (fifo_half_full_edge_latch && (write_addr[4:0] == 5'h1f)) begin
+        if (fifo_half_full_edge_latch && (write_addr[5:0] == 6'h3f)) begin
             fifo_half_full_edge_delay <= 1;
         end else begin
             fifo_half_full_edge_delay <= 0;

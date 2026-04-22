@@ -257,7 +257,7 @@ int main(void)
 	readFlag = 0;
 
 	while(readFlag == 0);
-	HAL_Delay(5000);
+	HAL_Delay(1000);
 	readFlag = 0;
 
 	while (1)
