@@ -24,6 +24,7 @@
 #include "quadspi.h"
 #include "sdmmc.h"
 #include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "usb_device.h"
 #include "gpio.h"
@@ -55,8 +56,8 @@
 /* USER CODE BEGIN PV */
 volatile uint8_t readFlag = 0;
 
-#define BUFFER_SIZE 512
-#define NUM_BUFFERS 50
+#define BUFFER_SIZE 256000
+#define NUM_BUFFERS 2
 
 uint8_t frameBuffers[NUM_BUFFERS][BUFFER_SIZE];
 uint8_t readBufferIndex = 0;
@@ -109,12 +110,14 @@ int main(void) {
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
 	MX_DMA_Init();
-	MX_SPI3_Init();
-	WriteBitStream();
 	MX_ETH_Init();
+	MX_USART3_UART_Init();
 	MX_QUADSPI_Init();
 	MX_SDMMC1_SD_Init();
 	MX_FATFS_Init();
+	MX_SPI3_Init();
+	MX_USB_DEVICE_Init();
+	MX_TIM2_Init();
 	/* USER CODE BEGIN 2 */
 
 	readBufferIndex = 0;
@@ -135,40 +138,49 @@ int main(void) {
 
 	uint32_t readCounter = 0;
 
-	if (f_open(&Fil, "file.raw", FA_WRITE | FA_READ | FA_CREATE_ALWAYS) != FR_OK)
+	if (f_open(&Fil, "file.raw", FA_WRITE | FA_READ | FA_CREATE_ALWAYS)
+			!= FR_OK)
 		__BKPT();
 
 	/* EXTI interrupt init*/
-	HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ(EXTI2_IRQn);
-
+//	HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
+//	HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+	HAL_TIM_Base_Start_IT(&htim2);
+	uint32_t timerValue = __HAL_TIM_GetCounter(&htim2);
 	HAL_Delay(1000);
+	uint32_t max = 0;
+	uint32_t min = -1;
+	unsigned int unused;
+	uint32_t times[50];
 
+	for (uint8_t i = 0; i < 50; ++i) {
+//	while (1) {
+		uint32_t start = __HAL_TIM_GetCounter(&htim2);
+		f_write(&Fil, frameBuffers[writeBufferIndex + 1], BUFFER_SIZE, &unused);
+		uint32_t time = __HAL_TIM_GetCounter(&htim2) - start;
+		if (time > max)
+			max = time;
+		if (time < min)
+			min = time;
+		times[i] = time;
+	}
+	f_close(&Fil);
 	__BKPT();
 
-	unsigned int unused;
-	while (1) {
-		// Wait until fpga signals that data is ready
-		if (numFullBuffers > 1)
-		{
-			f_write(&Fil, frameBuffers[writeBufferIndex + 1], BUFFER_SIZE, &unused);
-			f_close(&Fil);
-			__BKPT();
+	writeBufferIndex = ++writeBufferIndex % NUM_BUFFERS;
+	--numFullBuffers;
+	++readCounter;
+//		}
+//		if (readCounter == 1000) {
+//			f_close(&Fil);
+//			__BKPT();
+//		}
+	/* USER CODE END WHILE */
 
-			writeBufferIndex = ++writeBufferIndex % NUM_BUFFERS;
-			--numFullBuffers;
-			++readCounter;
-		}
-		if (readCounter == 1000) {
-			f_close(&Fil);
-			__BKPT();
-		}
-		/* USER CODE END WHILE */
-		/* USER CODE BEGIN 3 */
-	}
-	/* USER CODE END 3 */
+	/* USER CODE BEGIN 3 */
 }
-
+/* USER CODE END 3 */
+//}
 /**
  * @brief System Clock Configuration
  * @retval None
@@ -224,22 +236,21 @@ void SystemClock_Config(void) {
 
 /* USER CODE BEGIN 4 */
 uint32_t bytesRead = 0;
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-	if (GPIO_Pin == GPIO_PIN_2)
-	{
-		// Cant keep up
-		if (numFullBuffers > 1)
-		{
-			++numFullBuffers;
-			return;
-		}
-
-		memcpy(frameBuffers[readBufferIndex++], (uint8_t*) (QSPI_MEMORY_START_ADDRESS + bytesRead), BUFFER_SIZE);
-		readBufferIndex = (++readBufferIndex) % NUM_BUFFERS;
-		bytesRead = (bytesRead + BUFFER_SIZE) & 0xfffffff;
-		++numFullBuffers;
-	}
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+//	if (GPIO_Pin == GPIO_PIN_2) {
+//		// Cant keep up
+//		if (numFullBuffers > 1) {
+//			++numFullBuffers;
+//			return;
+//		}
+//
+//		memcpy(frameBuffers[readBufferIndex++],
+//				(uint8_t*) (QSPI_MEMORY_START_ADDRESS + bytesRead),
+//				BUFFER_SIZE);
+//		readBufferIndex = (++readBufferIndex) % NUM_BUFFERS;
+//		bytesRead = (bytesRead + BUFFER_SIZE) & 0xfffffff;
+//		++numFullBuffers;
+//	}
 }
 
 /* USER CODE END 4 */
