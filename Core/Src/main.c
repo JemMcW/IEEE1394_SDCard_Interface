@@ -111,13 +111,12 @@ int main(void)
   MX_SPI3_Init();
   WriteBitStream();
 
-  MX_QUADSPI_Init();
   MX_ETH_Init();
-  MX_USART3_UART_Init();
+//  MX_USART3_UART_Init();
+  MX_QUADSPI_Init();
   MX_SDMMC1_SD_Init();
   MX_FATFS_Init();
-
-  MX_USB_DEVICE_Init();
+//  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
     uint32_t bytesRead = 0;
@@ -126,27 +125,29 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-/*
+
     FATFS FatFs;
-      FIL Fil;
-      FRESULT FR_Status;
-      FATFS *FS_Ptr;
-      UINT RWC, WWC; // Read/Write Word Counter
-      DWORD FreeClusters;
-      uint32_t TotalSize, FreeSpace;
-      char RW_Buffer[200];
+	FIL Fil;
+	FRESULT FR_Status;
+	FATFS *FS_Ptr;
+	UINT RWC, WWC; // Read/Write Word Counter
+	DWORD FreeClusters;
+	uint32_t TotalSize, FreeSpace;
+	char RW_Buffer[200];
 
         //------------------[ Mount The SD Card ]--------------------
         FR_Status = f_mount(&FatFs, SDPath, 1);
         while (FR_Status != FR_OK)
         {
           sprintf(TxBuffer, "Error! While Mounting SD Card, Error Code: (%i)\r\n", FR_Status);
-          HAL_UART_Transmit(&huart3, TxBuffer, strlen(TxBuffer), 1000);
+//          HAL_UART_Transmit(&huart3, TxBuffer, strlen(TxBuffer), 1000);
+          __BKPT();
           while(1);
 //          USB_CDC_Print(TxBuffer);
 //          break;
         }
-        sprintf(TxBuffer, "SD Card Mounted Successfully! \r\n\n");
+//        __BKPT();
+        /*sprintf(TxBuffer, "SD Card Mounted Successfully! \r\n\n");
 //        USB_CDC_Print(TxBuffer);
         HAL_UART_Transmit(&huart3, TxBuffer, strlen(TxBuffer), 1000);
 
@@ -260,6 +261,9 @@ int main(void)
 	HAL_Delay(1000);
 	readFlag = 0;
 
+	FR_Status = f_open(&Fil, "file.raw", FA_WRITE | FA_READ | FA_CREATE_ALWAYS);
+
+	int loopCount = 0;
 	while (1)
 	{
 	  // Wait until fpga signals that data is ready
@@ -269,7 +273,7 @@ int main(void)
 
 		  // Quad SPI is memory mapped, can use memcpy or DMA directly from the FPGA memory
 		  // Number of bytes read must be equal to fpga fifo size (currently 512 bytes can be increased up to 4KB) (bigger better for SDCard writes?)
-		  memcpy(&frameBuffer[bytesRead], ((uint8_t *)QSPI_MEMORY_START_ADDRESS + bytesRead), 512);
+		  memcpy(&frameBuffer[readCounter * 512], ((uint8_t *)QSPI_MEMORY_START_ADDRESS + bytesRead), 512);
 
 		  // Reads must be made to sequential addresses due to stm pre-fetching, even though the FPGA doesn't care what the address is.
 		  // Maximum of 256MB can be memory mapped so wrap address
@@ -282,23 +286,17 @@ int main(void)
 	  }
 	  UINT bytesWritten = 0;
 	  // After data is collected send over serial
-	  if (readCounter >= 562)
+	  if (readCounter == 562)
 	  {
-		  for (int i = 0; i < 562; i++)
-		  {
-			  HAL_UART_Transmit(&huart3, &frameBuffer[512*i], 512, 1000);
-			  HAL_Delay(100);
-		  }
-//		  f_write(&Fil, &frameBuffer[0], 562*512, &bytesWritten);
+		  readCounter = 0;
+		  ++loopCount;
+		  f_write(&Fil, &frameBuffer[0], 562*512, &bytesWritten);
+	  }
 
-
-//
-//		  f_close(&Fil);
-		  __BKPT(1);
-		  while(1)
-		  {
-			  __BKPT(1);
-		  }
+	  if (loopCount > 50)
+	  {
+		  f_close(&Fil);
+		  __BKPT();
 	  }
 
     /* USER CODE END WHILE */
